@@ -15,8 +15,8 @@ typedef enum Command {
     COMMAND_DISCONNECT    // Close connection
 } Command;
 
-void Shared_send_command(int socket_fd, Command command);
-Command Shared_read_command(int socket_fd);
+void Shared_send_int(int socket_fd, int x);
+int Shared_read_int(int socket_fd);
 
 void Shared_send_string(int socket_fd, char *string);
 char *Shared_read_string(int socket_fd);

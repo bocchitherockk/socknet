@@ -51,7 +51,7 @@ void Client_connect() {
 void Client_run() {
     Command command = 0;
     while (command != COMMAND_DISCONNECT) {
-        command = Shared_read_command(client_socket_fd);
+        command = Shared_read_int(client_socket_fd);
         switch (command) {
             case COMMAND_DISPLAY: {
                 char *string = Shared_read_string(client_socket_fd);

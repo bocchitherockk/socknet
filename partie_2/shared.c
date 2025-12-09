@@ -4,20 +4,20 @@
 
 #include "./shared.h"
 
-void Shared_send_command(int socket_fd, Command command) {
-    if (send(socket_fd, &command, sizeof(command), 0) == -1) {
+void Shared_send_int(int socket_fd, int x) {
+    if (send(socket_fd, &x, sizeof(x), 0) == -1) {
         perror("send");
         exit(1);
     }
 }
 
-Command Shared_read_command(int socket_fd) {
-    Command command = 0;
-    if (recv(socket_fd, &command, sizeof(command), 0) == -1) {
+int Shared_read_int(int socket_fd) {
+    int x = 0;
+    if (recv(socket_fd, &x, sizeof(x), 0) == -1) {
         perror("recv");
         exit(1);
     }
-    return command;
+    return x;
 }
 
 void Shared_send_string(int socket_fd, char *string) {

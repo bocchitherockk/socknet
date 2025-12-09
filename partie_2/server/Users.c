@@ -20,8 +20,8 @@ size_t Users_append(Users *users, User item) {
 
 void Users_remove_at(Users *users, size_t index) {
     memmove(
-        users->items + index*sizeof(User),
-        users->items + (index+1)*sizeof(User),
+        users->items,
+        users->items + (index+1),
         (users->count - (index+1)) * sizeof(User)
     );
     users->count--;
