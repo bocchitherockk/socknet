@@ -70,19 +70,23 @@ static char *_Server_run_command(const char *executable, char *args[]) {
 void Server_send_menu(int client_socket_fd) {
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
     Shared_send_string(client_socket_fd, (
-        "=================\n"
-        "choose an option:\n"
-        "    1. add user (admin) <username> <password> <confiramtion password max 3 tries>\n"
-        "    2. delete user (admin) <username>\n"
-        "    3. update role (admin) <username> <role>\n"
-        "    4. update username <old username> <new username>\n"
-        "    5. update password <username> <old password> <new password> <confiramtion password max 3 tries>\n"
-        "    6. date\n"
-        "    7. ls <dirname>\n"
-        "    8. cat <filename>\n"
-        "    9. elapsed\n"
-        "    10. exit\n"
-        "what is your choice: "
+        "\n\033[1;36m=================================================\n"
+        "              MAIN MENU                         \n"
+        "=================================================\033[0m\n\n"
+        "\033[1;33m[USER MANAGEMENT]\033[0m\n"
+        "  1. Add User        - Create new account (Admin)\n"
+        "  2. Delete User     - Remove account (Admin)\n"
+        "  3. Update Role     - Change permissions (Admin)\n\n"
+        "\033[1;33m[ACCOUNT SETTINGS]\033[0m\n"
+        "  4. Update Username - Change your username\n"
+        "  5. Update Password - Change your password\n\n"
+        "\033[1;33m[SYSTEM COMMANDS]\033[0m\n"
+        "  6. Date            - Show current date/time\n"
+        "  7. List Files      - Show directory contents\n"
+        "  8. View File       - Display file contents\n"
+        "  9. Session Time    - Show time logged in\n\n"
+        "  10. Exit           - Log out\n\n"
+        "\033[1;32m>>> Enter your choice (1-10): \033[0m"
     ));
 }
 
@@ -98,17 +102,19 @@ Menu_Option Server_read_menu_option(int client_socket_fd) {
 void Server_handle_option_add_user(int client_socket_fd, User_Role admin_role) {
     if (admin_role != USER_ROLE_ADMIN) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "this action is only permissable for admins\n");
+        Shared_send_string(client_socket_fd, "\n\033[1;31m[ERROR]\033[0m Access denied: Only administrators can add users.\n\n");
         return;
     }
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter the username: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Create New User ===\033[0m\n");
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "Username: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *username = Shared_read_string(client_socket_fd);
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter the password: ");
+    Shared_send_string(client_socket_fd, "Password: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *password = Shared_read_string(client_socket_fd);
 
@@ -117,31 +123,31 @@ void Server_handle_option_add_user(int client_socket_fd, User_Role admin_role) {
     char *confirmation_password = NULL;
     while (tries < max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "confirm the password: ");
+        Shared_send_string(client_socket_fd, "Confirm Password: ");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
         confirmation_password = Shared_read_string(client_socket_fd);
         if (strcmp(confirmation_password, password) == 0) break;
         tries++;
         free(confirmation_password);
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "passwords don't match, try again.\n");
+        Shared_send_string(client_socket_fd, "\033[1;33m[WARNING]\033[0m Passwords don't match. Try again.\n");
 
     }
     if (tries >= max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "you entered the wrong password 3 times, canceling ...\n");
+        Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Too many failed attempts. Operation cancelled.\n\n");
         return;
     }
 
     User_Role role = 0;
     while (role != USER_ROLE_ADMIN && role != USER_ROLE_USER) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "enter the role\n  admin: 1\n  user: 2\nrole: ");
+        Shared_send_string(client_socket_fd, "\nSelect Role:\n  [1] Admin  (full access)\n  [2] User   (limited access)\n\033[1;32mChoice: \033[0m");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_INT);
         role = Shared_read_int(client_socket_fd);
         if (role != USER_ROLE_ADMIN && role != USER_ROLE_USER) {
             Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-            Shared_send_string(client_socket_fd, "not a valid role\n");
+            Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Invalid role. Please enter 1 or 2.\n");
         }
     }
 
@@ -159,12 +165,12 @@ void Server_handle_option_add_user(int client_socket_fd, User_Role admin_role) {
 void Server_handle_option_delete_user(int client_socket_fd, User_Role admin_role) {
     if (admin_role != USER_ROLE_ADMIN) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "this action is only permissable for admins\n");
+        Shared_send_string(client_socket_fd, "\n\033[1;31m[ERROR]\033[0m Access denied: Only administrators can delete users.\n\n");
         return;
     }
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter the username: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Delete User ===\033[0m\nUsername: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *username = Shared_read_string(client_socket_fd);
     pthread_mutex_lock(&users_mutex);
@@ -179,24 +185,24 @@ void Server_handle_option_delete_user(int client_socket_fd, User_Role admin_role
 void Server_handle_option_update_role(int client_socket_fd, User_Role admin_role) {
     if (admin_role != USER_ROLE_ADMIN) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "this action is only permissable for admins\n");
+        Shared_send_string(client_socket_fd, "\n\033[1;31m[ERROR]\033[0m Access denied: Only administrators can change roles.\n\n");
         return;
     }
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter the username: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Update User Role ===\033[0m\nUsername: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *username = Shared_read_string(client_socket_fd);
 
     User_Role role = 0;
     while (role != USER_ROLE_ADMIN && role != USER_ROLE_USER) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "enter the new role\n  admin: 1\n  user: 2\nrole: ");
+        Shared_send_string(client_socket_fd, "\nSelect New Role:\n  [1] Admin  (full access)\n  [2] User   (limited access)\n\033[1;32mChoice: \033[0m");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_INT);
         role = Shared_read_int(client_socket_fd);
         if (role != USER_ROLE_ADMIN && role != USER_ROLE_USER) {
             Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-            Shared_send_string(client_socket_fd, "not a valid role\n");
+            Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Invalid role. Please enter 1 or 2.\n");
         }
     }    
 
@@ -209,7 +215,7 @@ void Server_handle_option_update_role(int client_socket_fd, User_Role admin_role
 
 void Server_handle_option_update_username(int client_socket_fd, User *user) {
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter the new username: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Update Username ===\033[0m\nNew Username: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *new_username = Shared_read_string(client_socket_fd);
     strncpy(user->username, new_username, sizeof(user->username));
@@ -220,27 +226,30 @@ void Server_handle_option_update_password(int client_socket_fd, User *user) {
     int tries = 0;
     int max_tries = 3;
     
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Change Password ===\033[0m\n");
+    
     char *old_password = NULL;
     while (tries < max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "enter your old password: ");
+        Shared_send_string(client_socket_fd, "Current Password: ");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
         old_password = Shared_read_string(client_socket_fd);
         if (strcmp(old_password, user->password) == 0) break;
         tries++;
         free(old_password);
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "passwords don't match, try again.\n");
+        Shared_send_string(client_socket_fd, "\033[1;33m[WARNING]\033[0m Incorrect password. Try again.\n");
     }
 
     if (tries >= max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "you entered the wrong password 3 times, canceling ...\n");
+        Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Too many failed attempts. Operation cancelled.\n\n");
         return;
     }
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "enter your new password: ");
+    Shared_send_string(client_socket_fd, "New Password: ");
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *new_password = Shared_read_string(client_socket_fd);
 
@@ -250,23 +259,25 @@ void Server_handle_option_update_password(int client_socket_fd, User *user) {
     char *confirmation_password = NULL;
     while (tries < max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "confirm your new password: ");
+        Shared_send_string(client_socket_fd, "Confirm New Password: ");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
         confirmation_password = Shared_read_string(client_socket_fd);
         if (strcmp(confirmation_password, new_password) == 0) break;
         tries++;
         free(confirmation_password);
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "passwords don't match, try again.\n");
+        Shared_send_string(client_socket_fd, "\033[1;33m[WARNING]\033[0m Passwords don't match. Try again.\n");
 
     }
     if (tries >= max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "you entered the wrong password 3 times, canceling ...\n");
+        Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Too many failed attempts. Operation cancelled.\n\n");
         return;
     }
 
     strncpy(user->password, new_password, sizeof(user->password));
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\033[1;32m[SUCCESS]\033[0m Password updated successfully!\n\n");
 
     free(old_password);
     free(new_password);
@@ -276,33 +287,45 @@ void Server_handle_option_update_password(int client_socket_fd, User *user) {
 void Server_handle_option_date(int client_socket_fd) {
     char *result = _Server_run_command("date", (char *[]){"date", "+%Y/%m/%d %H:%M:%S", NULL});
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Current Date/Time ===\033[0m\n");
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
     Shared_send_string(client_socket_fd, result);
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
     free(result);
 }
 
 void Server_handle_option_ls(int client_socket_fd) {
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "Enter the directory name: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== List Directory Contents ===\033[0m\nPath: ");
 
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *filename = Shared_read_string(client_socket_fd);
     char *result = _Server_run_command("ls", (char *[]){"ls", "-l", filename, NULL});
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
     Shared_send_string(client_socket_fd, result);
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
     free(result);
 }
 
 void Server_handle_option_cat(int client_socket_fd) {
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "Enter the filename: ");
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== View File Contents ===\033[0m\nFilename: ");
 
     Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
     char *filename = Shared_read_string(client_socket_fd);
     char *result = _Server_run_command("cat", (char *[]){"cat", filename, NULL});
 
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
     Shared_send_string(client_socket_fd, result);
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
     free(result);
 }
 
@@ -330,7 +353,11 @@ void Server_handle_option_elapsed(int client_socket_fd, time_t login_time) {
         elapsed_seconds
     );
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=== Session Duration ===\033[0m\n");
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
     Shared_send_string(client_socket_fd, result);
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n");
 }
 
 void Server_handle_option_exit(int client_socket_fd) {
@@ -339,15 +366,21 @@ void Server_handle_option_exit(int client_socket_fd) {
 
 void Server_handle_option_invalid(int client_socket_fd) {
     Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-    Shared_send_string(client_socket_fd, "invalid Menu_Option\n");
+    Shared_send_string(client_socket_fd, "\n\033[1;31m[ERROR]\033[0m Invalid option. Please select 1-10.\n\n");
 }
 
 
 void Server_handle_client_sync(int client_socket_fd) {
     User *user = NULL;
+    
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\n\033[1;36m=================================================\n"
+                                           "     WELCOME TO SOCKNET SERVER                 \n"
+                                           "=================================================\033[0m\n\n");
+    
     while (true) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "Enter your username: ");
+        Shared_send_string(client_socket_fd, "\033[1;35m=== Login ===\033[0m\nUsername: ");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
         
         char *username = Shared_read_string(client_socket_fd);
@@ -358,14 +391,14 @@ void Server_handle_client_sync(int client_socket_fd) {
         free(username);
         if (user != NULL) break;
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "No account found with this username\n");
+        Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m User not found. Please try again.\n\n");
     }
 
     int tries = 0;
     int max_tries = 3;
     while (tries < max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "Enter your password: ");
+        Shared_send_string(client_socket_fd, "Password: ");
         Shared_send_int(client_socket_fd, COMMAND_INPUT_STRING);
 
         char *password = Shared_read_string(client_socket_fd);
@@ -373,16 +406,19 @@ void Server_handle_client_sync(int client_socket_fd) {
         free(password);
         if (login == true) break;
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "Wrong password! try again\n");
+        Shared_send_string(client_socket_fd, "\033[1;33m[WARNING]\033[0m Incorrect password. Try again.\n\n");
         tries++;
     }
 
     if (tries >= max_tries) {
         Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
-        Shared_send_string(client_socket_fd, "you entered the wrong password 3 times, exiting ...\n");
+        Shared_send_string(client_socket_fd, "\033[1;31m[ERROR]\033[0m Too many failed login attempts. Connection closed.\n\n");
         Server_handle_option_exit(client_socket_fd);
         return;
     }
+    
+    Shared_send_int(client_socket_fd, COMMAND_DISPLAY);
+    Shared_send_string(client_socket_fd, "\033[1;32m[SUCCESS]\033[0m Login successful! Welcome.\n\n");
 
     Menu_Option option;
     do {

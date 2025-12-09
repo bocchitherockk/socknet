@@ -9,7 +9,7 @@
 int main(void) {
     Server_init();
     while (true) {
-        int client_socket_fd = Server_accept_conection();
+        int client_socket_fd = Server_accept_connection();
         Server_handle_client_async(client_socket_fd);
     }
     Server_destroy();
