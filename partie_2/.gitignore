@@ -3,7 +3,6 @@
 # executables
 client/client_main
 server/server_main
-tests/one-client.test
-tests/client-runs-before-server.test
-tests/multiple-clients.test
-gui/gui
+tests/test
+tests/outputs/*
+!tests/outputs/.gitkeep

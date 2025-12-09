@@ -24,15 +24,14 @@ $(CLIENT_EXECUTABLE): Makefile $(SHARED_HEADER) $(SHARED_SOURCE) $(CLIENT_HEADER
 	$(CC) $(CFLAGS) -o $(CLIENT_EXECUTABLE) $(SHARED_SOURCE) $(CLIENT_SOURCE)
 
 # tests
-TEST_DIR = ./tests
-TEST_SOURCE := $(wildcard $(TEST_DIR)/*.c)
-TEST_EXECUTABLE := $(basename $(TEST_SOURCE))
+TEST_SOURCE = ./tests/test.c
+TEST_EXECUTABLE = ./tests/test
 
-%.test: %.test.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-tests: compile $(TEST_EXECUTABLE)
+tests: compile
+	$(CC) $(CFLAGS) -o $(TEST_EXECUTABLE) $(TEST_SOURCE)
 
 clean:
 	rm -f $(SERVER_EXECUTABLE)
 	rm -f $(CLIENT_EXECUTABLE)
+	rm -f $(TEST_EXECUTABLE)
+	find ./tests/outputs/ -maxdepth 1 -type f ! -name '.gitkeep' -exec rm -r {} +

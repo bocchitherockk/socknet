@@ -46,8 +46,9 @@ static char *_Server_run_command(const char *executable, char *args[]) {
         perror("fork");
         exit(1);
     } else if (process == 0) {
-        close(pipe_fd[0]);
         dup2(pipe_fd[1], STDOUT_FILENO);
+        dup2(pipe_fd[1], STDERR_FILENO);
+        close(pipe_fd[0]);
         close(pipe_fd[1]);
         execvp(executable, args);
         perror("execvp failed");
