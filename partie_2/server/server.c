@@ -426,7 +426,7 @@ void Server_handle_client_sync(int client_socket_fd) {
         Server_send_menu(client_socket_fd);
         Shared_send_int(client_socket_fd, COMMAND_INPUT_INT);
         option = Server_read_menu_option(client_socket_fd);
-    
+
         switch (option) {
             case MENU_OPTION_ADD_USER   : Server_handle_option_add_user(client_socket_fd, user->role); break;
             case MENU_OPTION_DELETE_USER: Server_handle_option_delete_user(client_socket_fd, user->role); break;

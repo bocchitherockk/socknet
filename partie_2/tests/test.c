@@ -1,14 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <string.h>
 
-#define CLIENTS_COUNT 5
+char *test_cases[] = {
+    "login.txt",
+    "wrong-login-password.txt",
+    "add-admin.txt",
+    "add-user.txt",
+    "date-ls.txt",
+    "cat-elapsed.txt",
+    "update-username.txt",
+    "update-password.txt",
+    "no-permissions.txt",
+    "update-role.txt",
+    "no-permissions-2.txt",
+    "delete-user.txt",
+    "user-deleted.txt",
+};
+int test_cases_length = sizeof(test_cases)/sizeof(test_cases[0]);
 
-int main(void) {
+bool should_run_test(int test_index, int argc, char **argv) {
+    if (argc == 1) return true;
+    for (int i = 1; i < argc; i++) {
+        if (atoi(argv[i]) == test_index)
+            return true;
+    }
+    return false;
+}
+
+int main(int argc, char **argv) {
     // run the server
     int server = fork();
     if (server == -1) {
@@ -20,15 +45,18 @@ int main(void) {
         exit(1);
     }
 
+    sleep(2); // wait for server to startup
     // run the clients
-    for (int i = 0; i < CLIENTS_COUNT; i++) {
+    for (int i = 0; i < test_cases_length; i++) {
+        if (!should_run_test(i, argc, argv)) continue;
         char input_file_name [256] = {0};
         char output_file_name[256] = {0};
-        snprintf(input_file_name,  256, "./tests/inputs/input-%d.txt", i);
-        snprintf(output_file_name, 256, "./tests/outputs/output-%d.txt", i);
+        snprintf(input_file_name,  256, "./tests/inputs/%02d-%s",  i, test_cases[i]);
+        snprintf(output_file_name, 256, "./tests/outputs/%02d-%s", i, test_cases[i]);
         int input_file_fd  = open(input_file_name, O_RDONLY);
         int output_file_fd = open(output_file_name, O_WRONLY | O_CREAT, 0644);
 
+        printf("testcase [%d]: %s\n", i, test_cases[i]);
         int client = fork();
         if (client == -1) {
             perror("fork");
@@ -40,12 +68,10 @@ int main(void) {
             perror("execlp");
             exit(1);
         }
+        waitpid(client, NULL, 0);
     }
 
-    // wait for all clients to finish running
-    for (int i = 0; i < CLIENTS_COUNT; i++) {
-        wait(NULL);
-    }
+    kill(server, SIGKILL);
 
     return 0;
 }
